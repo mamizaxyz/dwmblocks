@@ -9,12 +9,8 @@
 #define LENGTH(X)               (sizeof(X) / sizeof (X[0]))
 #define CMDLENGTH		50
 
-typedef struct {
-	char* icon;
-	char* command;
-	unsigned int interval;
-	unsigned int signal;
-} Block;
+#include "config.h"
+
 void sighandler(int num);
 void buttonhandler(int sig, siginfo_t *si);
 void replace(char *str, char old, char new);
@@ -29,8 +25,6 @@ int getstatus(char *str, char *last);
 void setroot();
 void statusloop();
 void termhandler();
-
-#include "config.h"
 
 static Display *dpy;
 static int screen;
@@ -133,7 +127,7 @@ void setupsignals()
     	for (int i = SIGRTMIN; i <= SIGRTMAX; i++)
         	signal(i, SIG_IGN);
 
-	for (int i = 0; i < LENGTH(blocks); i++) {
+	for (size_t i = 0; i < LENGTH(blocks); i++) {
 		if (blocks[i].signal > 0) {
 			signal(SIGRTMIN+blocks[i].signal, sighandler);
 			sigaddset(&sa.sa_mask, SIGRTMIN+blocks[i].signal);
