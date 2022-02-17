@@ -4,7 +4,8 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
-#include<X11/Xlib.h>
+#include <X11/Xlib.h>
+
 #define LENGTH(X)               (sizeof(X) / sizeof (X[0]))
 #define CMDLENGTH		50
 
@@ -15,7 +16,7 @@ typedef struct {
 	unsigned int signal;
 } Block;
 void sighandler(int num);
-void buttonhandler(int sig, siginfo_t *si, void *ucontext);
+void buttonhandler(int sig, siginfo_t *si);
 void replace(char *str, char old, char new);
 void remove_all(char *str, char to_remove);
 void getcmds(int time);
@@ -27,7 +28,7 @@ void sighandler(int signum);
 int getstatus(char *str, char *last);
 void setroot();
 void statusloop();
-void termhandler(int signum);
+void termhandler();
 
 #include "config.h"
 
@@ -73,7 +74,7 @@ gcd(int a, int b)
 	return a;
 }
 
-//opens process *cmd and stores output in *output
+/* opens process *cmd and stores output in *output */
 void getcmd(const Block *block, char *output)
 {
 	if (block->signal) {
@@ -108,7 +109,7 @@ void getcmd(const Block *block, char *output)
 void getcmds(int time)
 {
 	const Block* current;
-	for (int i = 0; i < LENGTH(blocks); i++) {
+	for (size_t i = 0; i < LENGTH(blocks); i++) {
 		current = blocks + i;
 		if ((current->interval != 0 && time % current->interval == 0) || time == -1)
 			getcmd(current,statusbar[i]);
@@ -152,18 +153,20 @@ int getstatus(char *str, char *last)
 {
 	strcpy(last, str);
 	str[0] = '\0';
-	for (int i = 0; i < LENGTH(blocks); i++) {
+	for (size_t i = 0; i < LENGTH(blocks); i++) {
 		strcat(str, statusbar[i]);
 		if (i == LENGTH(blocks) - 1)
 			strcat(str, " ");
 	}
 	str[strlen(str) - 1] = '\0';
-	return strcmp(str, last);//0 if they are the same
+	/* 0 if they are the same */
+	return strcmp(str, last);
 }
 
 void setroot()
 {
-	if (!getstatus(statusstr[0], statusstr[1]))//Only set root if text has changed.
+	/* Only set root if text has changed. */
+	if (!getstatus(statusstr[0], statusstr[1]))
 		return;
 	Display *d = XOpenDisplay(NULL);
 	if (d) {
@@ -177,12 +180,12 @@ void setroot()
 
 void pstdout()
 {
-	if (!getstatus(statusstr[0], statusstr[1]))//Only write out if text has changed.
+	/* Only write out if text has changed. */
+	if (!getstatus(statusstr[0], statusstr[1]))
 		return;
 	printf("%s\n",statusstr[0]);
 	fflush(stdout);
 }
-
 
 void statusloop()
 {
@@ -190,14 +193,17 @@ void statusloop()
 	setupsignals();
 #endif
 	unsigned int interval = -1;
-	for(int i = 0; i < LENGTH(blocks); i++) {
+	for(size_t i = 0; i < LENGTH(blocks); i++) {
 		if (blocks[i].interval) {
 			interval = gcd(blocks[i].interval, interval);
 		}
 	}
 	unsigned int i = 0;
 	int interrupted = 0;
-	const struct timespec sleeptime = {interval, 0};
+	const struct timespec sleeptime = {
+		interval,
+		0
+	};
 	struct timespec tosleep = sleeptime;
 	getcmds(-1);
 	while (statusContinue) {
@@ -219,7 +225,7 @@ void sighandler(int signum)
 	writestatus();
 }
 
-void buttonhandler(int sig, siginfo_t *si, void *ucontext)
+void buttonhandler(int sig, siginfo_t *si)
 {
 	char button[2] = {'0' + si->si_value.sival_int & 0xff, '\0'};
 	pid_t process_id = getpid();
@@ -242,7 +248,7 @@ void buttonhandler(int sig, siginfo_t *si, void *ucontext)
 	}
 }
 #endif
-void termhandler(int signum)
+void termhandler()
 {
 	statusContinue = 0;
 	exit(0);
@@ -250,7 +256,7 @@ void termhandler(int signum)
 
 int main(int argc, char** argv)
 {
-	for (int i = 0; i < argc; i++) {//Handle command line arguments
+	for (int i = 0; i < argc; i++) {
 		if (!strcmp("-d",argv[i]))
 			delim = argv[++i];
 		else if (!strcmp("-p",argv[i]))
