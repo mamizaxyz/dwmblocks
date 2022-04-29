@@ -11,6 +11,7 @@ typedef struct {
 static const Block blocks[] = {
 	/* Icon */	/* Command */		/* Update Interval */	/* Update Signal */
 	{ "",           "sb-pacup",		3600,			8  },
+	{ "",           "sb-lastup",		86400,			0  },
 	/* { "",           "sb-cpu",		10,			18 }, */
 	/* { "",           "sb-memory",		10,			14 }, */
 	{ "",           "sb-volume",		0,			10 },
